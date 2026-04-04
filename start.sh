@@ -92,12 +92,27 @@ if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_nvenc"; then
 fi
 
 if echo "$GPU_INFO" | grep -qi "Intel" && [ "$HAS_QSV_ENCODER" -eq 1 ]; then
-  echo "Intel GPU detected — using Quick Sync (QSV)"
+  echo "Intel GPU detected — validating Quick Sync (QSV) support"
   export LIBVA_DRIVER_NAME=iHD
-  ffmpeg -stream_loop -1 -i "$VIDEO_FILE" \
-    -c:v h264_qsv -b:v 20M -f null - &
-  FFMPEG_PID=$!
-  GPU_SUMMARY="FFmpeg QSV transcode loop on $VIDEO_FILE (h264_qsv, 20M)"
+  if ffmpeg -hide_banner -loglevel error \
+    -f lavfi -i testsrc=size=128x72:rate=1 \
+    -frames:v 1 -an -c:v h264_qsv -f null - >/dev/null 2>&1; then
+    echo "Intel GPU detected — using Quick Sync (QSV)"
+    ffmpeg -stream_loop -1 -i "$VIDEO_FILE" \
+      -c:v h264_qsv -b:v 20M -f null - &
+    FFMPEG_PID=$!
+    GPU_SUMMARY="FFmpeg QSV transcode loop on $VIDEO_FILE (h264_qsv, 20M)"
+  elif [ "$HAS_DRI" -eq 1 ] && [ "$HAS_VAAPI_ENCODER" -eq 1 ]; then
+    echo "Intel QSV encoder detected but unavailable at runtime — falling back to VAAPI"
+    ffmpeg -stream_loop -1 -i "$VIDEO_FILE" \
+      -vf 'format=nv12,hwupload' \
+      -c:v h264_vaapi -b:v 20M -f null - &
+    FFMPEG_PID=$!
+    GPU_SUMMARY="FFmpeg VAAPI transcode loop on $VIDEO_FILE (Intel fallback, 20M)"
+  else
+    echo "Intel QSV encoder detected but unavailable at runtime — running CPU-only mode."
+    GPU_SUMMARY="Disabled (QSV unavailable at runtime)"
+  fi
 
 elif echo "$GPU_INFO" | grep -qi "AMD" && [ "$HAS_DRI" -eq 1 ] && [ "$HAS_VAAPI_ENCODER" -eq 1 ]; then
   echo "AMD GPU detected — using VAAPI"
