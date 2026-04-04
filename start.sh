@@ -104,7 +104,7 @@ if [ "$HAS_VAAPI_ENCODER" -eq 1 ] && [ -n "$VAAPI_DEVICE" ]; then
     -vaapi_device "$VAAPI_DEVICE" \
     -f lavfi -i testsrc=size=128x72:rate=1 \
     -vf 'format=nv12,hwupload' \
-    -frames:v 1 -an -c:v h264_vaapi -f null - >/dev/null 2>&1; then
+    -frames:v 1 -an -c:v h264_vaapi -f null - > /dev/null 2>&1; then
     HAS_VAAPI_RUNTIME=1
   fi
 fi
