@@ -3,8 +3,8 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
-RUN apt update && \
-    apt install -y \
+RUN apt update \
+  && apt install -y \
     ffmpeg \
     stress-ng \
     intel-media-va-driver-non-free \
@@ -12,8 +12,8 @@ RUN apt update && \
     boinc-client \
     wget \
     ca-certificates \
-    pciutils && \
-    apt clean && rm -rf /var/lib/apt/lists/*
+    pciutils \
+  && apt clean && rm -rf /var/lib/apt/lists/*
 
 # Working directory
 WORKDIR /loadburner
