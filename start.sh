@@ -74,11 +74,19 @@ echo "GPU_INFO: $GPU_INFO"
 
 HAS_DRI=0
 HAS_VAAPI_ENCODER=0
+HAS_VAAPI_RUNTIME=0
 HAS_QSV_ENCODER=0
 HAS_NVENC_ENCODER=0
+VAAPI_DEVICE=""
 
 if [ -e /dev/dri/renderD128 ] || [ -e /dev/dri/card0 ]; then
   HAS_DRI=1
+fi
+
+if [ -e /dev/dri/renderD128 ]; then
+  VAAPI_DEVICE="/dev/dri/renderD128"
+elif [ -e /dev/dri/card0 ]; then
+  VAAPI_DEVICE="/dev/dri/card0"
 fi
 
 if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_vaapi"; then
@@ -89,6 +97,16 @@ if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_qsv"; then
 fi
 if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_nvenc"; then
   HAS_NVENC_ENCODER=1
+fi
+
+if [ "$HAS_VAAPI_ENCODER" -eq 1 ] && [ -n "$VAAPI_DEVICE" ]; then
+  if ffmpeg -hide_banner -loglevel error \
+    -vaapi_device "$VAAPI_DEVICE" \
+    -f lavfi -i testsrc=size=128x72:rate=1 \
+    -vf 'format=nv12,hwupload' \
+    -frames:v 1 -an -c:v h264_vaapi -f null - >/dev/null 2>&1; then
+    HAS_VAAPI_RUNTIME=1
+  fi
 fi
 
 if echo "$GPU_INFO" | grep -qi "Intel" && [ "$HAS_QSV_ENCODER" -eq 1 ]; then
@@ -102,9 +120,9 @@ if echo "$GPU_INFO" | grep -qi "Intel" && [ "$HAS_QSV_ENCODER" -eq 1 ]; then
       -c:v h264_qsv -b:v 20M -f null - &
     FFMPEG_PID=$!
     GPU_SUMMARY="FFmpeg QSV transcode loop on $VIDEO_FILE (h264_qsv, 20M)"
-  elif [ "$HAS_DRI" -eq 1 ] && [ "$HAS_VAAPI_ENCODER" -eq 1 ]; then
+  elif [ "$HAS_VAAPI_RUNTIME" -eq 1 ]; then
     echo "Intel QSV encoder detected but unavailable at runtime — falling back to VAAPI"
-    ffmpeg -stream_loop -1 -i "$VIDEO_FILE" \
+    ffmpeg -vaapi_device "$VAAPI_DEVICE" -stream_loop -1 -i "$VIDEO_FILE" \
       -vf 'format=nv12,hwupload' \
       -c:v h264_vaapi -b:v 20M -f null - &
     FFMPEG_PID=$!
@@ -114,9 +132,9 @@ if echo "$GPU_INFO" | grep -qi "Intel" && [ "$HAS_QSV_ENCODER" -eq 1 ]; then
     GPU_SUMMARY="Disabled (QSV unavailable at runtime)"
   fi
 
-elif echo "$GPU_INFO" | grep -qi "AMD" && [ "$HAS_DRI" -eq 1 ] && [ "$HAS_VAAPI_ENCODER" -eq 1 ]; then
+elif echo "$GPU_INFO" | grep -qi "AMD" && [ "$HAS_VAAPI_RUNTIME" -eq 1 ]; then
   echo "AMD GPU detected — using VAAPI"
-  ffmpeg -stream_loop -1 -i "$VIDEO_FILE" \
+  ffmpeg -vaapi_device "$VAAPI_DEVICE" -stream_loop -1 -i "$VIDEO_FILE" \
     -vf 'format=nv12,hwupload' \
     -c:v h264_vaapi -b:v 20M -f null - &
   FFMPEG_PID=$!
@@ -129,9 +147,9 @@ elif echo "$GPU_INFO" | grep -qi "NVIDIA" && [ "$HAS_NVENC_ENCODER" -eq 1 ]; the
   FFMPEG_PID=$!
   GPU_SUMMARY="FFmpeg NVENC transcode loop on $VIDEO_FILE (h264_nvenc, 20M)"
 
-elif [ "$HAS_DRI" -eq 1 ] && [ "$HAS_VAAPI_ENCODER" -eq 1 ]; then
+elif [ "$HAS_VAAPI_RUNTIME" -eq 1 ]; then
   echo "GPU not identified by lspci (common in WSL/containers) — trying generic VAAPI"
-  ffmpeg -stream_loop -1 -i "$VIDEO_FILE" \
+  ffmpeg -vaapi_device "$VAAPI_DEVICE" -stream_loop -1 -i "$VIDEO_FILE" \
     -vf 'format=nv12,hwupload' \
     -c:v h264_vaapi -b:v 20M -f null - &
   FFMPEG_PID=$!
