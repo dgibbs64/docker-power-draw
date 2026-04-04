@@ -12,15 +12,15 @@ cleanup() {
   echo "Shutdown signal received. Stopping load generators..."
   trap - INT TERM
 
-  if [ -n "$FFMPEG_PID" ] && kill -0 "$FFMPEG_PID" 2>/dev/null; then
-    kill "$FFMPEG_PID" 2>/dev/null || true
+  if [ -n "$FFMPEG_PID" ] && kill -0 "$FFMPEG_PID" 2> /dev/null; then
+    kill "$FFMPEG_PID" 2> /dev/null || true
   fi
 
-  if [ -n "$STRESS_PID" ] && kill -0 "$STRESS_PID" 2>/dev/null; then
-    kill "$STRESS_PID" 2>/dev/null || true
+  if [ -n "$STRESS_PID" ] && kill -0 "$STRESS_PID" 2> /dev/null; then
+    kill "$STRESS_PID" 2> /dev/null || true
   fi
 
-  boinccmd --quit >/dev/null 2>&1 || true
+  boinccmd --quit > /dev/null 2>&1 || true
   wait || true
   exit 0
 }
@@ -81,13 +81,13 @@ if [ -e /dev/dri/renderD128 ] || [ -e /dev/dri/card0 ]; then
   HAS_DRI=1
 fi
 
-if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q "h264_vaapi"; then
+if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_vaapi"; then
   HAS_VAAPI_ENCODER=1
 fi
-if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q "h264_qsv"; then
+if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_qsv"; then
   HAS_QSV_ENCODER=1
 fi
-if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q "h264_nvenc"; then
+if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_nvenc"; then
   HAS_NVENC_ENCODER=1
 fi
 
