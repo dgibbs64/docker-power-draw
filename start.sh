@@ -96,7 +96,7 @@ if echo "$GPU_INFO" | grep -qi "Intel" && [ "$HAS_QSV_ENCODER" -eq 1 ]; then
   export LIBVA_DRIVER_NAME=iHD
   if ffmpeg -hide_banner -loglevel error \
     -f lavfi -i testsrc=size=128x72:rate=1 \
-    -frames:v 1 -an -c:v h264_qsv -f null - >/dev/null 2>&1; then
+    -frames:v 1 -an -c:v h264_qsv -f null - > /dev/null 2>&1; then
     echo "Intel GPU detected — using Quick Sync (QSV)"
     ffmpeg -stream_loop -1 -i "$VIDEO_FILE" \
       -c:v h264_qsv -b:v 20M -f null - &
