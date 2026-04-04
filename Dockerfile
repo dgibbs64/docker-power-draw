@@ -5,14 +5,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install dependencies
 RUN apt update \
   && apt install -y \
-    ffmpeg \
-    stress-ng \
-    intel-media-va-driver-non-free \
-    vainfo \
     boinc-client \
-    wget \
     ca-certificates \
+    curl \
+    ffmpeg \
+    intel-media-va-driver-non-free \
+    mesa-va-drivers \
     pciutils \
+    stress-ng \
+    vainfo \
   && apt clean && rm -rf /var/lib/apt/lists/*
 
 # Working directory
