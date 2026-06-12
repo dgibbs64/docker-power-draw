@@ -12,9 +12,9 @@ cleanup() {
   echo "Shutdown signal received. Stopping load generators..."
   trap - INT TERM
   for pid in "${BGPIDS[@]}"; do
-    kill "$pid" 2>/dev/null || true
+    kill "$pid" 2> /dev/null || true
   done
-  boinccmd --quit >/dev/null 2>&1 || true
+  boinccmd --quit > /dev/null 2>&1 || true
   wait || true
   exit 0
 }
@@ -80,7 +80,7 @@ fi
 
 # --- GPU detection ---
 echo "Detecting GPU..."
-GPU_INFO=$(lspci 2>/dev/null | grep -E "VGA|Display|3D" | head -n 1 || true)
+GPU_INFO=$(lspci 2> /dev/null | grep -E "VGA|Display|3D" | head -n 1 || true)
 echo "GPU_INFO: ${GPU_INFO:-none detected via lspci}"
 
 HAS_DRI=0
@@ -102,9 +102,9 @@ elif [ -e /dev/dri/card0 ]; then
   VAAPI_DEVICE="/dev/dri/card0"
 fi
 
-if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q "h264_vaapi"; then HAS_VAAPI_ENCODER=1; fi
-if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q "h264_qsv";   then HAS_QSV_ENCODER=1;   fi
-if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q "h264_nvenc"; then HAS_NVENC_ENCODER=1; fi
+if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_vaapi"; then HAS_VAAPI_ENCODER=1; fi
+if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_qsv"; then HAS_QSV_ENCODER=1; fi
+if ffmpeg -hide_banner -encoders 2> /dev/null | grep -q "h264_nvenc"; then HAS_NVENC_ENCODER=1; fi
 
 # VAAPI runtime test
 if [ "$HAS_VAAPI_ENCODER" -eq 1 ] && [ -n "$VAAPI_DEVICE" ]; then
@@ -124,7 +124,7 @@ if echo "$GPU_INFO" | grep -qi "NVIDIA"; then
 elif [ -e /dev/nvidia0 ] || [ -e /dev/nvidiactl ]; then
   NVIDIA_DETECTED=1
   echo "NVIDIA device nodes detected (lspci unavailable in container)"
-elif command -v nvidia-smi &>/dev/null && nvidia-smi &>/dev/null 2>&1; then
+elif command -v nvidia-smi &> /dev/null && nvidia-smi &> /dev/null 2>&1; then
   NVIDIA_DETECTED=1
   echo "NVIDIA detected via nvidia-smi"
 fi
@@ -133,7 +133,7 @@ fi
 if [ "$NVIDIA_DETECTED" -eq 1 ] && [ "$HAS_NVENC_ENCODER" -eq 1 ]; then
   if ffmpeg -hide_banner -loglevel error \
     -f lavfi -i testsrc=size=128x72:rate=1 \
-    -frames:v 1 -an -c:v h264_nvenc -f null - >/dev/null 2>&1; then
+    -frames:v 1 -an -c:v h264_nvenc -f null - > /dev/null 2>&1; then
     HAS_NVENC_RUNTIME=1
   fi
 fi
@@ -144,7 +144,7 @@ if echo "$GPU_INFO" | grep -qi "Intel" && [ "$HAS_QSV_ENCODER" -eq 1 ]; then
   export LIBVA_DRIVER_NAME=iHD
   if ffmpeg -hide_banner -loglevel error \
     -f lavfi -i testsrc=size=128x72:rate=1 \
-    -frames:v 1 -an -c:v h264_qsv -f null - >/dev/null 2>&1; then
+    -frames:v 1 -an -c:v h264_qsv -f null - > /dev/null 2>&1; then
     echo "Intel GPU - using Quick Sync (QSV)"
     # shellcheck disable=SC2086
     ffmpeg $GPU_INPUT -c:v h264_qsv -preset veryslow -b:v 40M -f null - &
