@@ -1,0 +1,33 @@
+services:
+  power-draw:
+    image: ghcr.io/dgibbs64/docker-power-draw:latest
+    container_name: power-draw
+    pull_policy: always
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      BOINC_PROJECT_URL: ${BOINC_PROJECT_URL:-}
+      BOINC_ACCOUNT_KEY: ${BOINC_ACCOUNT_KEY:-}
+      BOINC_BAM_EMAIL: ${BOINC_BAM_EMAIL:-}
+      BOINC_BAM_PASSWORD: ${BOINC_BAM_PASSWORD:-}
+      BOINC_DEFAULT_KEY: ${BOINC_DEFAULT_KEY:-}
+      VIDEO_URL: ${VIDEO_URL:-}
+    # Intel/AMD GPU: pass /dev/dri for VAAPI/QSV hardware encode.
+    # Remove this block on NVIDIA-only hosts (no /dev/dri exists there).
+    devices:
+      - /dev/dri:/dev/dri
+    # NVIDIA GPU: uncomment the deploy block below and ensure
+    # nvidia-container-toolkit is installed on the host.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    # Optional: expose BOINC RPC to host
+    # ports:
+    #   - "31416:31416"
+    # Optional: keep downloaded video file between restarts
+    # volumes:
+    #   - ./data:/loadburner
