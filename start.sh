@@ -25,15 +25,22 @@ echo "Starting BOINC client..."
 boinc --daemon
 sleep 5
 
+# Account-manager URL (BAM!, Science United, GridRepublic, etc.).
+# Defaults to BAM! for backward compatibility. The credentials can be given as
+# BOINC_ACCT_MGR_EMAIL/PASSWORD, falling back to the legacy BOINC_BAM_* names.
+BOINC_ACCT_MGR_URL="${BOINC_ACCT_MGR_URL:-https://bam.boincstats.com}"
+ACCT_MGR_EMAIL="${BOINC_ACCT_MGR_EMAIL:-$BOINC_BAM_EMAIL}"
+ACCT_MGR_PASSWORD="${BOINC_ACCT_MGR_PASSWORD:-$BOINC_BAM_PASSWORD}"
+
 # BOINC attachment logic
 if [ -n "$BOINC_PROJECT_URL" ] && [ -n "$BOINC_ACCOUNT_KEY" ]; then
   echo "Attaching to specific BOINC project: $BOINC_PROJECT_URL"
   boinccmd --project_attach "$BOINC_PROJECT_URL" "$BOINC_ACCOUNT_KEY" || echo "Project attach failed."
   BOINC_SUMMARY="attached to project: $BOINC_PROJECT_URL"
-elif [ -n "$BOINC_BAM_EMAIL" ] && [ -n "$BOINC_BAM_PASSWORD" ]; then
-  echo "Attaching to BAM! account manager..."
-  boinccmd --acct_mgr attach https://bam.boincstats.com "$BOINC_BAM_EMAIL" "$BOINC_BAM_PASSWORD" || echo "BAM! attach failed."
-  BOINC_SUMMARY="attached to BAM! account manager"
+elif [ -n "$ACCT_MGR_EMAIL" ] && [ -n "$ACCT_MGR_PASSWORD" ]; then
+  echo "Attaching to account manager: $BOINC_ACCT_MGR_URL"
+  boinccmd --acct_mgr attach "$BOINC_ACCT_MGR_URL" "$ACCT_MGR_EMAIL" "$ACCT_MGR_PASSWORD" || echo "Account manager attach failed."
+  BOINC_SUMMARY="attached to account manager: $BOINC_ACCT_MGR_URL"
 elif [ -n "$BOINC_DEFAULT_KEY" ]; then
   echo "No specific project configured. Attaching to World Community Grid by default..."
   boinccmd --project_attach https://www.worldcommunitygrid.org "$BOINC_DEFAULT_KEY" || echo "WCG attach failed."

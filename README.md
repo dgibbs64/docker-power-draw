@@ -69,12 +69,20 @@ docker compose up -d
 
 ## Environment Variables
 
-BOINC attachment precedence:
+BOINC attachment precedence (first match wins):
 
-1. `BOINC_PROJECT_URL` + `BOINC_ACCOUNT_KEY` — attach to a specific project
-2. `BOINC_BAM_EMAIL` + `BOINC_BAM_PASSWORD` — attach via BAM! account manager
-3. `BOINC_DEFAULT_KEY` — attach to World Community Grid
+1. `BOINC_PROJECT_URL` + `BOINC_ACCOUNT_KEY` attach to a single specific project
+2. `BOINC_ACCT_MGR_EMAIL` + `BOINC_ACCT_MGR_PASSWORD` attach via an account manager. The manager URL is set by `BOINC_ACCT_MGR_URL` (default `https://bam.boincstats.com`). The legacy `BOINC_BAM_EMAIL` / `BOINC_BAM_PASSWORD` names still work as the credentials.
+3. `BOINC_DEFAULT_KEY` attach to World Community Grid
 4. If none are set, BOINC idles
+
+Account manager URLs for `BOINC_ACCT_MGR_URL`:
+
+- BAM! (BOINCstats): `https://bam.boincstats.com` (default)
+- Science United: `https://scienceunited.org`
+- GridRepublic: `https://www.gridrepublic.org`
+
+With Science United, you choose science areas on the website and it assigns projects for you automatically.
 
 GPU video source:
 
