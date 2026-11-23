@@ -3,8 +3,8 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
-RUN apt update \
-  && apt install -y \
+RUN apt-get update \
+  && apt-get install -y \
     boinc-client \
     ca-certificates \
     curl \
@@ -14,7 +14,7 @@ RUN apt update \
     pciutils \
     stress-ng \
     vainfo \
-  && apt clean && rm -rf /var/lib/apt/lists/*
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Working directory
 WORKDIR /loadburner
